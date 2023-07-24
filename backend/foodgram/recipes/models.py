@@ -1,14 +1,13 @@
 from django.db import models
-from django.contrib.auth import get_user_model
+
+from users.models import User
+
 
 TAG = [
     ('Завтрак', ('#E26C2D', 'breakfast')),
     ('Обед', ('#49B64E', 'breakfast')),
     ('Ужин', ('#3d66bf', 'dinner'))
 ]
-
-
-User = get_user_model()     # TODO new app
 
 
 class Recipe(models.Model):
@@ -47,8 +46,8 @@ class Recipe(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=200)
-    measure = models.CharField(max_length=15)
+    name = models.CharField(max_length=200)  # primary_key=True
+    measurement_unit = models.CharField(max_length=15)
 
     class Meta:
         default_related_name = 'ingredient'
@@ -64,7 +63,7 @@ class Tag(models.Model):
 
 
 class GrossaryList(models.Model):
-    user_id = models.ForeignKey(   # У разных листов один автор
+    user_id = models.ForeignKey(  # У разных листов один автор
         User,
         on_delete=models.CASCADE)
     # В одном списке покупок может быть несколько рецептов
