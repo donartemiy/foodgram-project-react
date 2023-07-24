@@ -1,7 +1,7 @@
 from django.contrib import admin
-
-# Register your models here.
-
-from foodgram.models import Recipe
+from recipes.models import Recipe, Ingredient, Tag, GrossaryList, Favorite
 
 admin.site.register(Recipe)
+admin.site.register(Ingredient)
+admin.site.register(GrossaryList)
+admin.site.register(Favorite)
