@@ -3,38 +3,47 @@ from django.db import models
 from users.models import User
 
 
-TAG = [
-    ('Завтрак', ('#E26C2D', 'breakfast')),
-    ('Обед', ('#49B64E', 'breakfast')),
-    ('Ужин', ('#3d66bf', 'dinner'))
-]
+# TAG = [
+#     ('Завтрак', ('#E26C2D', 'breakfast')),
+#     ('Обед', ('#49B64E', 'breakfast')),
+#     ('Ужин', ('#3d66bf', 'dinner'))
+# ]
 
 
 class Recipe(models.Model):
-    name = models.CharField(
-        max_length=200,
-        verbose_name='Называние рецепта')
-    text = models.TextField(verbose_name='Рецепт')
-    user_id = models.ForeignKey(  # У разных постов один автор
+    tags = models.ManyToManyField(
+        'Tag',
+        verbose_name='Список id тегов')
+    author = models.ForeignKey(  # У разных постов один автор
         User,
-        on_delete=models.CASCADE)
-    # Один юзер может лайнкуть много рецептов
-    # Один пост может иметь много лайков
-    like_id = models.ManyToManyField(
+        on_delete=models.CASCADE,
+        related_name='rname_recipe_author')
+    ingredients = models.ManyToManyField(  # У разных рецпетов неск. ингр-ов
+        'Ingredient',
+        through='RecipeIngredient',
+        through_fields=('recipe', 'ingredient'),
+        related_name='rname_recipes',
+        verbose_name='Список ингредиентов')
+    is_favorited = models.ManyToManyField(
         User,
         through='Favorite',
-        through_fields=('recipe_id', 'user_id'),
+        through_fields=('recipe', 'user'),
         blank=True,
-        related_name='rname_recipes')
+        related_name='rname_recipes_is_favorited')
+    is_in_shopping_cart = models.ManyToManyField(
+        User,
+        through='ShoppingCart',
+        through_fields=('recipe', 'user'),
+        related_name='rname_recipes_is_in_shopping_cart')
     image = models.ImageField(
         blank=True,
-        null=True)
-    ingredient_id = models.ManyToManyField(  # У разных рецпетов неск. ингр-ов
-        'Ingredient',
-        related_name='rname_recipes')
-    quantity = models.PositiveIntegerField()
-    tag_id = models.ManyToManyField('Tag')
-    duration = models.PositiveIntegerField(
+        null=True,
+        verbose_name='Картинка, закодированная в Base64')
+    name = models.CharField(
+        max_length=200,
+        verbose_name='Название')
+    text = models.TextField(verbose_name='Описание')
+    cooking_time = models.PositiveIntegerField(     # >= 1
         verbose_name='Время приготовления в минутах')
     pub_date = models.DateTimeField(auto_now_add=True)
 
@@ -42,12 +51,12 @@ class Recipe(models.Model):
         ordering = ['-pub_date']
 
     def __str__(self):
-        return self.name
+        return f'Рецепт {self.name}'
 
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=200)  # primary_key=True
-    measurement_unit = models.CharField(max_length=15)
+    measurement_unit = models.CharField(max_length=200)
 
     class Meta:
         default_related_name = 'ingredient'
@@ -56,45 +65,53 @@ class Ingredient(models.Model):
         return self.name
 
 
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(Recipe,
+                               on_delete=models.CASCADE,
+                               related_name='rname_recipe_ingredients')
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    amount = models.PositiveIntegerField()
+
+
 class Tag(models.Model):
-    name = models.CharField(max_length=15, verbose_name='тэг')
-    color = models.CharField(max_length=16)
-    slug = models.SlugField(unique=True, verbose_name='Ссылка')
+    name = models.CharField(max_length=200, verbose_name='Название')
+    color = models.CharField(max_length=7, verbose_name='Цвет в HEX')
+    slug = models.SlugField(max_length=200, verbose_name='Уникальный слаг',
+                            unique=True)
+
+    def __str__(self):
+        return self.name
 
 
-class GrossaryList(models.Model):
-    user_id = models.ForeignKey(  # У разных листов один автор
-        User,
-        on_delete=models.CASCADE)
-    # В одном списке покупок может быть несколько рецептов
-    # Один рецепт пожет быть в нескольких листах
-    recipe_id = models.ManyToManyField(Recipe)
-
-    class Meta:
-        default_related_name = 'rname_grossarylist'
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
 
 class Favorite(models.Model):
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    recipe_id = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['recipe_id', 'user_id'],
+            models.UniqueConstraint(fields=['recipe', 'user'],
                                     name='unique_like')
         ]
 
+    def __str__(self):
+        return f'{self.user}, id рецепта: {self.recipe.id}, {self.recipe}'
 
-class Follow(models.Model):
+
+class Subscription(models.Model):
     following = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор',
+        verbose_name='Автор(на когоподписаны)',
         related_name='following')
     follower = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Подписчик',
+        verbose_name='Подписчик(кто подписан)',
         related_name='follower')
 
     class Meta:
@@ -102,3 +119,6 @@ class Follow(models.Model):
             fields=['following', 'follower'],
             name='unique subs')
         ]
+
+    def __str__(self):
+        return f'{self.follower} подписан на {self.following}'
