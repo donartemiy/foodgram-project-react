@@ -5,7 +5,8 @@ from api.serializers import (FavoriteSerializer, ShoppingCartSerializer,
                              RecipeCreateSerializer,
                              RecipeForFavoriteSerializer,
                              SubscriptionListSerializer,
-                             UserSerializer)
+                             UserSerializer,
+                             UserSubscribeSerializer)
 from recipes.models import (Favorite, ShoppingCart, Ingredient, Recipe,
                             Subscription, Tag)
 from users.models import User
@@ -15,6 +16,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import permissions
+from djoser.views import UserViewSet
+from rest_framework.views import APIView
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -100,5 +103,46 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
 
 
 class UserListViewSet(viewsets.ModelViewSet):
+    """Не используется. Тут работало отображение всех пользователей
+    path('users/', UserListViewSet.as_view({'get': 'list'})),"""
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+
+class UserViewSet(UserViewSet):
+    """Отображение всех пользователей. Через
+    path('users/', UserViewSet.as_view({'get': 'list'})),"""
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def list(self, request, *args, **kwargs):
+        """Возвращает всех пользователей
+        http://127.0.0.1:8000/api/users/"""
+        queryset = User.objects.all()
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class UserSubscribeView(APIView):
+    """Создание/удаление подписки на пользователя."""
+    def post(self, request, pk):
+        following = get_object_or_404(User, id=pk)
+        serializer = UserSubscribeSerializer(
+            data={'follower': request.user.id, 'following': following.id},
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, pk):
+        following = get_object_or_404(User, id=pk)
+        if not Subscription.objects.filter(follower=request.user,
+                                           following=following).exists():
+            return Response(
+                {'errors': 'Вы не подписаны на этого пользователя'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        Subscription.objects.get(follower=request.user.id,
+                                 following=pk).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

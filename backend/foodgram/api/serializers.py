@@ -159,6 +159,29 @@ class UserSerializer(serializers.ModelSerializer):
     http://127.0.0.1:8000/api/users/"""
     class Meta:
         model = User
-        # fields = '__all__'
-        fields = ('email', 'id', 'username', 'first_name',
-                  'last_name')
+        fields = '__all__'
+        # fields = ('email', 'id', 'username', 'first_name',
+        #           'last_name')
+
+
+class UserSubscribeSerializer(serializers.ModelSerializer):
+    """Сериализатор для подписки/отписки от пользователей."""
+    class Meta:
+        model = Subscription
+        fields = '__all__'
+
+    def validate(self, data):
+        """Пользователь не может подписаться на самого себя."""
+        request = self.context.get('request')
+        if request.user == data['following']:
+            raise serializers.ValidationError(
+                'Нельзя подписываться на самого себя!'
+            )
+        return data
+
+    def to_representation(self, instance):
+        """После POST возвращаем """
+        request = self.context.get('request')
+        return UserSerializer(
+            instance.following, context={'request': request}
+        ).data
