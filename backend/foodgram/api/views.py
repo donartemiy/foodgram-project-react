@@ -18,6 +18,7 @@ from rest_framework import status
 from rest_framework import permissions
 from djoser.views import UserViewSet
 from rest_framework.views import APIView
+from rest_framework.mixins import RetrieveModelMixin
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -109,9 +110,9 @@ class UserListViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
 
-class UserViewSet(UserViewSet):
-    """Отображение всех пользователей. Через
-    path('users/', UserViewSet.as_view({'get': 'list'})),"""
+class MyUserViewSet(UserViewSet):
+    """ Отображение всех пользователей. Через
+    path('users/', UserViewSet.as_view({'get': 'list'})). """
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -120,6 +121,14 @@ class UserViewSet(UserViewSet):
         http://127.0.0.1:8000/api/users/"""
         queryset = User.objects.all()
         serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        """ Возвращает информацию о конкретном пользователе
+        http://127.0.0.1:8000/api/users/1/. """
+        queryset = User.objects.all()
+        user = get_object_or_404(queryset, pk=pk)
+        serializer = UserSerializer(user)
         return Response(serializer.data)
 
 

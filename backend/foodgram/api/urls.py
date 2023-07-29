@@ -1,6 +1,6 @@
 from api.views import (FavoriteViewSet, ShoppingCartViewSet, IngredientViewSet,
                        RecipeViewSet, SubscriptionViewSet, TagViewSet,
-                       UserListViewSet, UserViewSet,
+                       UserListViewSet, MyUserViewSet,
                        UserSubscribeView)
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
@@ -17,7 +17,8 @@ urlpatterns = [
     path('users/subscriptions/', SubscriptionViewSet.as_view({'get': 'list'})),
     # url(..., include('djoser.urls.authtoken')), сделать для токенов
     path('users/<int:pk>/subscribe/', UserSubscribeView.as_view()),
-    path('users/', UserViewSet.as_view({'get': 'list'})),
+    path('users/', MyUserViewSet.as_view({'get': 'list'})),
+    path('users/<int:pk>/', MyUserViewSet.as_view({'get': 'retrieve'})),
     path('', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     path('', include(router.urls)),
