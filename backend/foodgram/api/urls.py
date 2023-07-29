@@ -1,7 +1,10 @@
 from api.views import (FavoriteViewSet, ShoppingCartViewSet, IngredientViewSet,
-                       RecipeViewSet, SubscriptionViewSet, TagViewSet)
+                       RecipeViewSet, SubscriptionViewSet, TagViewSet,
+                       UserListViewSet)
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+# from djoser.views import UserViewSet
+
 
 router = DefaultRouter()
 router.register('recipes', RecipeViewSet, basename='recipes')
@@ -13,6 +16,10 @@ router.register('shopping_cart', ShoppingCartViewSet, basename='shopping_cart')
 urlpatterns = [
     # из теории router.register(r'profile/(?P<username>[\w.@+-]+)/', AnyViewSet)
     path('users/subscriptions', SubscriptionViewSet.as_view({'get': 'list'})),
+
+    # новый путь "users/", который обрабатывается представлением
+    # UserViewSet из пакета djoser
+    path('users/', UserListViewSet.as_view({'get': 'list'})),
     path('', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     path('', include(router.urls)),

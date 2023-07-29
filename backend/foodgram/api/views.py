@@ -4,7 +4,8 @@ from api.serializers import (FavoriteSerializer, ShoppingCartSerializer,
                              SubscriptionSerializer, TagSerializer,
                              RecipeCreateSerializer,
                              RecipeForFavoriteSerializer,
-                             SubscriptionListSerializer)
+                             SubscriptionListSerializer,
+                             UserSerializer)
 from recipes.models import (Favorite, ShoppingCart, Ingredient, Recipe,
                             Subscription, Tag)
 from users.models import User
@@ -85,16 +86,7 @@ class FavoriteViewSet(viewsets.ModelViewSet):
     serializer_class = FavoriteSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
-    # def get_queryset(self):
-    #     recipe = self.kwargs.get('recipe')
-    #     recipe = get_object_or_404(Recipe, pk=recipe)
-    #     return recipe.recipe
 
-
-# class SubscriptionViewSet(mixins.ListModelMixin):
-#     queryset = Subscription.objects.all()
-#     serializer_class = SubscriptionSerializer
-#     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 class SubscriptionViewSet(viewsets.ModelViewSet):
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
@@ -107,7 +99,6 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-# class UserViewSet(viewsets.ModelViewSet):
-#     queryset = User.objects.all()
-#     serializer_class = UserSerializer
-#     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+class UserListViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer

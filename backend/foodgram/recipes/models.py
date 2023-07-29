@@ -3,13 +3,6 @@ from django.db import models
 from users.models import User
 
 
-# TAG = [
-#     ('Завтрак', ('#E26C2D', 'breakfast')),
-#     ('Обед', ('#49B64E', 'breakfast')),
-#     ('Ужин', ('#3d66bf', 'dinner'))
-# ]
-
-
 class Recipe(models.Model):
     tags = models.ManyToManyField(
         'Tag',
@@ -51,7 +44,7 @@ class Recipe(models.Model):
         ordering = ['-pub_date']
 
     def __str__(self):
-        return f'Рецепт {self.name}'
+        return f'РЕЦЕПТ {self.name}'
 
 
 class Ingredient(models.Model):
@@ -62,7 +55,7 @@ class Ingredient(models.Model):
         default_related_name = 'ingredient'
 
     def __str__(self):
-        return self.name
+        return f'ИНГРЕДИЕНТ {self.name}'
 
 
 class RecipeIngredient(models.Model):
@@ -72,6 +65,9 @@ class RecipeIngredient(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField()
 
+    def __str__(self):
+        return f'РЕЦЕПТИНГРЕДИЕНТ {self.recipe}'
+
 
 class Tag(models.Model):
     name = models.CharField(max_length=200, verbose_name='Название')
@@ -80,7 +76,7 @@ class Tag(models.Model):
                             unique=True)
 
     def __str__(self):
-        return self.name
+        return f'ТЭГ {self.name}'
 
 
 class ShoppingCart(models.Model):
@@ -99,7 +95,7 @@ class Favorite(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.user}, id рецепта: {self.recipe.id}, {self.recipe}'
+        return f'ИЗБРАННОЕ{self.user}, id рецепта: {self.recipe.id}, {self.recipe}'
 
 
 class Subscription(models.Model):
@@ -121,4 +117,4 @@ class Subscription(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.follower} подписан на {self.following}'
+        return f'ПОДПИСКИ {self.follower} подписан на {self.following}'

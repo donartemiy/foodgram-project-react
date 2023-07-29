@@ -1,9 +1,8 @@
-# from djoser.serializers import UserSerializer
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Subscription, Tag)
 from rest_framework import serializers
 from users.models import User
-from djoser.serializers import UserSerializer
+# from djoser.serializers import UserSerializer
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
@@ -87,30 +86,39 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         # fields = ('name', 'cooking_time', 'text', 'tags')
 
     def create(self, validated_data):
-        """create не может сам создать объекты записываемые
-        вложенные поля. Поле ingredients."""
+        """ Станадртный create не может сам создать объекты записываемые
+        вложенные поля. Поле ingredients. """
         ingredients = validated_data.pop('ingredients')
         instance = super().create(validated_data)
+
+        # Обновление данных ингредиентов
         for ingredient_data in ingredients:
             RecipeIngredient(recipe=instance,
                              ingredient=ingredient_data['ingredient'],
                              amount=ingredient_data['amount']).save()
         return instance
 
-    # TODO Из-за этой фигни не работает отображение рецепта
+    def update(self, instance, validated_data):
+        # Обновление данных основного объекта Recipe
+        instance.name = validated_data.get('name', instance.name)
+        instance.text = validated_data.get('text', instance.text)
+        instance.cooking_time = validated_data.get('cooking_time', instance.cooking_time)
+        instance.save()
+
+        # Обновление данных тегов
+        tags_data = validated_data.pop('tags', [])
+        instance.tags.set(tags_data)
+
+        # Обновление данных ингредиентов
+        ingredients = validated_data.pop('ingredients', [])
+        instance.ingredients.clear()
+        for ingredient_data in ingredients:
+            RecipeIngredient.objects.create(recipe=instance, **ingredient_data)
+        return instance
+
     def to_representation(self, instance):
-        """Преобразуем данные перед выводом."""
-        obj = RecipeIngredient.objects.get(recipe=instance)
-
-        ingredients_dict = {}
-        ingredients_dict['id'] = obj.ingredient_id
-        ingredients_dict['name'] = obj.ingredient.name
-        ingredients_dict['measurement_unit'] = obj.ingredient.measurement_unit
-        ingredients_dict['amount'] = obj.amount
-        print('ITS_WORKING', ingredients_dict)
-        representation = super().to_representation(instance).update({'ingredients': [ingredients_dict]})
-
-        return representation
+        """ Для отображения данных после создания рецепта. """
+        return RecipeSerializer(instance).data
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -138,24 +146,19 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subscription
-        fields = 'id', 'follower', 'following', #'recipes'
+        fields = ('id', 'follower', 'following', )
 
     def get_recipes(self, instance):
-        print('\n1--------')
         print(instance)
         print(instance.rname_recipe_author.all())
-        print('2--------\n')
         return instance
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор для работы с информацией о пользователях.
+    http://127.0.0.1:8000/api/users/"""
     class Meta:
-        model = Subscription
-        fields = '__all__'
-
-# class UserGetSerializer(UserSerializer):
-#     """Сериализатор для работы с информацией о пользователях."""
-#     class Meta:
-#         model = User
-#         fields = ('email', 'id', 'username', 'first_name',
-#                   'last_name')
+        model = User
+        # fields = '__all__'
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name')
