@@ -15,10 +15,10 @@ router.register('tags', TagViewSet, basename='tags')
 
 urlpatterns = [
     path('users/subscriptions/', SubscriptionViewSet.as_view({'get': 'list'})),
-    # url(..., include('djoser.urls.authtoken')), сделать для токенов
     path('users/<int:pk>/subscribe/', UserSubscribeView.as_view()),
-    path('users/', MyUserViewSet.as_view({'get': 'list'})),
-    path('users/<int:pk>/', MyUserViewSet.as_view({'get': 'retrieve'})),
+    # url(..., include('djoser.urls.authtoken')), сделать для токенов
+    # path('users/', MyUserViewSet.as_view({'get': 'list'})),
+    # path('users/<int:pk>/', MyUserViewSet.as_view({'get': 'retrieve'})),
     path('', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     path('', include(router.urls)),

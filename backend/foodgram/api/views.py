@@ -14,11 +14,14 @@ from rest_framework import viewsets
 # для favorite
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, mixins
 from rest_framework import permissions
 from djoser.views import UserViewSet
 from rest_framework.views import APIView
-from rest_framework.mixins import RetrieveModelMixin
+from rest_framework.viewsets import GenericViewSet
+
+# path('users/<int:pk>/', MyUserViewSet.as_view({'get': 'retrieve'})),
+# from rest_framework.mixins import RetrieveModelMixin
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -67,13 +70,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(None)
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
-class TagViewSet(viewsets.ModelViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
@@ -91,17 +94,11 @@ class FavoriteViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
 
-class SubscriptionViewSet(viewsets.ModelViewSet):
-    queryset = Subscription.objects.all()
-    serializer_class = SubscriptionSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+class SubscriptionViewSet(mixins.ListModelMixin, GenericViewSet):
+    serializer_class = SubscriptionListSerializer
 
-    def list(self, request):
-        author = self.request.user
-        queryset = Subscription.objects.filter(follower=author.id)
-        serializer = SubscriptionListSerializer(queryset, many=True)
-        return Response(serializer.data)
-
+    def get_queryset(self):
+        return User.objects.filter(following__follower=self.request.user)
 
 class UserListViewSet(viewsets.ModelViewSet):
     """Не используется. Тут работало отображение всех пользователей
@@ -140,6 +137,7 @@ class UserSubscribeView(APIView):
             data={'follower': request.user.id, 'following': following.id},
             context={'request': request}
         )
+        print
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)

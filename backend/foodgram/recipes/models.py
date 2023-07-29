@@ -107,7 +107,7 @@ class Subscription(models.Model):
     follower = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Подписчик(кто подписан)',
+        verbose_name='Подписчик/Юзер(кто подписан)',
         related_name='follower')
 
     class Meta:

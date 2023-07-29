@@ -145,3 +145,21 @@ SIMPLE_JWT = {
 #         'user': 'api.serializers.UserGetSerializer',
 #     }
 # }
+
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'HIDE_USERS': False,
+    'PERMISSIONS': {
+         'user_list': ['rest_framework.permissions.AllowAny'],
+         'user': ['rest_framework.permissions.AllowAny']
+    },
+    'SERIALIZERS': {
+        'user': 'api.serializers.MyCustomUserSerializer',
+        "current_user": "api.serializers.MyCustomUserSerializer",
+        'user_create': 'api.serializers.MyCustomUserCreateSerializer',
+    }
+}
+
+
+# Что бы прошли миграции
+AUTH_USER_MODEL = 'users.User'

@@ -1,8 +1,8 @@
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Subscription, Tag)
 from rest_framework import serializers
+from djoser.serializers import UserSerializer, UserCreateSerializer
 from users.models import User
-# from djoser.serializers import UserSerializer
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
@@ -143,25 +143,56 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
     """Мои подписки.
     http://localhost/api/users/subscriptions/"""
     # recipes = serializers.SerializerMethodField() TODO
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField("get_recipes_count")
 
     class Meta:
-        model = Subscription
-        fields = ('id', 'follower', 'following', )
+        model = User
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'is_subscribed', 'recipes',
+                  'recipes_count')
 
-    def get_recipes(self, instance):
-        print(instance)
-        print(instance.rname_recipe_author.all())
-        return instance
+    def get_is_subscribed(self, obj):
+        request = self.context.get("request")
+        if request.user.is_anonymous:
+            return False
+        return Subscription.objects.filter(follower=request.user, following=obj).exists()
+
+    def get_recipes(self, obj):
+        request = self.context.get('request')
+        recipes = obj.rname_recipe_author.all()
+        return RecipeShortSerializer(recipes, many=True, context={'request': request}).data
+
+    def get_recipes_count(self, obj):
+        return obj.rname_recipe_author.count()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Сериализатор для работы с информацией о пользователях.
-    http://127.0.0.1:8000/api/users/"""
+    """ Сериализатор для работы с информацией о пользователях.
+    # path('users/', MyUserViewSet.as_view({'get': 'list'})),
+    # path('users/<int:pk>/', MyUserViewSet.as_view({'get': 'retrieve'})),
+    http://127.0.0.1:8000/api/users/. """
     class Meta:
         model = User
         fields = '__all__'
         # fields = ('email', 'id', 'username', 'first_name',
         #           'last_name')
+
+
+class MyCustomUserCreateSerializer(UserCreateSerializer):
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'password')
+
+
+class MyCustomUserSerializer(UserSerializer):
+    """ Кастомное отображения полей при просмотре инфо о пользователях. """
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name')
 
 
 class UserSubscribeSerializer(serializers.ModelSerializer):
@@ -182,6 +213,17 @@ class UserSubscribeSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         """После POST возвращаем """
         request = self.context.get('request')
-        return UserSerializer(
+        return SubscriptionListSerializer(
             instance.following, context={'request': request}
         ).data
+
+
+class RecipeShortSerializer(MyCustomUserCreateSerializer):
+    """ Предоставление данных о рецептах в Подписки. """
+    class Meta:
+        model = Recipe
+        fields = ['id',
+                  'name',
+                  'image',
+                  'cooking_time'
+                  ]
