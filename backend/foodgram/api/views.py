@@ -6,9 +6,12 @@ from api.serializers import (FavoriteSerializer, ShoppingCartSerializer,
                              RecipeForFavoriteSerializer,
                              SubscriptionListSerializer,
                              UserSerializer,
-                             UserSubscribeSerializer)
+                             UserSubscribeSerializer,
+                             #  PasswordSerializer,
+                             MyCustomUserSerializer,
+                             )
 from recipes.models import (Favorite, ShoppingCart, Ingredient, Recipe,
-                            Subscription, Tag)
+                            Subscription, Tag, RecipeIngredient)
 from users.models import User
 from rest_framework import viewsets
 # для favorite
@@ -19,6 +22,11 @@ from rest_framework import permissions
 from djoser.views import UserViewSet
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
+import os
+from foodgram.settings import MEDIA_ROOT
+from django.http import HttpResponse, FileResponse
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from api.permissions import IsAdminOrAuthorElseReadOnly
 
 # path('users/<int:pk>/', MyUserViewSet.as_view({'get': 'retrieve'})),
 # from rest_framework.mixins import RetrieveModelMixin
@@ -27,7 +35,7 @@ from rest_framework.viewsets import GenericViewSet
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAdminOrAuthorElseReadOnly,)
 
     def get_serializer_class(self):
         """При create используем сериализатор с одними полями,
@@ -46,7 +54,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'rname_recipe_ingredients__ingredient', 'tags')
         return recipes
 
-    @action(methods=['post', 'delete'], detail=True, url_path='favorite', url_name='favorite')
+    @action(methods=['post', 'delete'],
+            detail=True,
+            url_path='favorite',
+            url_name='favorite',
+            permission_classes=['IsAuthenticated'])
     def favorite(self, request, pk=None):
         """Создает ссылку recipes/{pk}/favorite
         и добавляет/удаляет запись в таблицу. """
@@ -69,17 +81,76 @@ class RecipeViewSet(viewsets.ModelViewSet):
             obj_favorite.delete()
             return Response(None)
 
+    @action(methods=['post', 'delete'],
+            detail=True,
+            permission_classes=['IsAuthenticated'])
+    def shopping_cart(self, request, pk):
+        """Работа со списком покупок. Удаление/добавление в список покупок. """
+        recipe = get_object_or_404(Recipe, id=pk)
+        if request.method == 'POST':
+            serializer = ShoppingCartSerializer(data={'user': request.user.id, 'recipe': recipe.id, },)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        if request.method == 'DELETE':
+            error_message = 'У вас нет этого рецепта в списке покупок'
+            if not ShoppingCart.objects.filter(user=request.user, recipe=recipe).exists():
+                return Response({'errors': error_message}, status=status.HTTP_400_BAD_REQUEST)
+            ShoppingCart.objects.filter(user=request.user, recipe=recipe).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated, ]
+    )
+    def download_shopping_cart(self, request):
+        author = request.user
+        shopping_cart = author.shopping_cart.all()
+        buying_list = {}
+        for record in shopping_cart:
+            recipe = record.recipe
+            ingredients = RecipeIngredient.objects.filter(recipe=recipe)
+            for ingredient in ingredients:
+                amount = ingredient.amount
+                name = ingredient.ingredient.name
+                measurement_unit = ingredient.ingredient.measurement_unit
+                if name not in buying_list:
+                    buying_list[name] = {
+                        "measurement_unit": measurement_unit,
+                        "amount": amount,
+                    }
+                else:
+                    buying_list[name]["amount"] = (
+                        buying_list[name]["amount"] + amount
+                    )
+        wishlist = []
+        for name, data in buying_list.items():
+            wishlist.append(
+                f"\n{name} ({data['measurement_unit']}) - {data['amount']}"
+            )
+        content = "".join(wishlist)
+        
+        # Создание файла shopping_cart.txt в папке media
+        filename = 'shopping_cart.txt'
+        filepath = os.path.join(MEDIA_ROOT, filename)
+        with open(filepath, 'w') as file:
+            file.write(content)
+        
+        return FileResponse(open(filepath, 'rb'), as_attachment=True, filename=filename)
+
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (AllowAny,)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (AllowAny,)
 
 
 class ShoppingCartViewSet(viewsets.ModelViewSet):
@@ -99,6 +170,7 @@ class SubscriptionViewSet(mixins.ListModelMixin, GenericViewSet):
 
     def get_queryset(self):
         return User.objects.filter(following__follower=self.request.user)
+
 
 class UserListViewSet(viewsets.ModelViewSet):
     """Не используется. Тут работало отображение всех пользователей
@@ -128,16 +200,39 @@ class MyUserViewSet(UserViewSet):
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
+    @action(
+        methods=["get"], detail=False,
+        # permission_classes=[IsAuthenticated]
+    )
+    def me(self, request, *args, **kwargs):
+        user = get_object_or_404(User, pk=request.user.id)
+        serializer = MyCustomUserSerializer(user)
+        return Response(serializer.data)
+
+    # @action(["post"], detail=False)
+    # def set_password(self, request, *args, **kwargs):
+    #     user = self.request.user
+    #     serializer = PasswordSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         user.set_password(serializer.validated_data["new_password"])
+    #         user.save()
+    #         return Response({"status": "password set"})
+    #     else:
+    #         return Response(
+    #             serializer.errors, status=status.HTTP_400_BAD_REQUEST
+    #         )
+
 
 class UserSubscribeView(APIView):
     """Создание/удаление подписки на пользователя."""
+    permission_classes = (IsAuthenticated,)
+
     def post(self, request, pk):
         following = get_object_or_404(User, id=pk)
         serializer = UserSubscribeSerializer(
             data={'follower': request.user.id, 'following': following.id},
             context={'request': request}
         )
-        print
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)

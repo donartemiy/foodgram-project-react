@@ -5,6 +5,7 @@ from djoser.serializers import UserSerializer, UserCreateSerializer
 from users.models import User
 
 
+
 class FavoriteSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
 
@@ -127,12 +128,6 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ShoppingCartSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ShoppingCart
-        fields = '__all__'
-
-
 class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
@@ -175,9 +170,9 @@ class UserSerializer(serializers.ModelSerializer):
     http://127.0.0.1:8000/api/users/. """
     class Meta:
         model = User
-        fields = '__all__'
-        # fields = ('email', 'id', 'username', 'first_name',
-        #           'last_name')
+        # fields = '__all__'
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name')
 
 
 class MyCustomUserCreateSerializer(UserCreateSerializer):
@@ -204,9 +199,13 @@ class UserSubscribeSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """Пользователь не может подписаться на самого себя."""
         request = self.context.get('request')
-        if request.user == data['following']:
+        print('\n\n\n\n', request.user.id)
+        print(data['following'].id)
+        check_uniq = Subscription.objects.filter(follower=request.user.id, following=data['following'].id).exists()
+        print(check_uniq)
+        if request.user == data['following'] or check_uniq:
             raise serializers.ValidationError(
-                'Нельзя подписываться на самого себя!'
+                'Вы уже подписаны на этого автора или пытаетесь подписаться на самого себя'
             )
         return data
 
@@ -219,7 +218,8 @@ class UserSubscribeSerializer(serializers.ModelSerializer):
 
 
 class RecipeShortSerializer(MyCustomUserCreateSerializer):
-    """ Предоставление данных о рецептах в Подписки. """
+    """ Предоставление данных о рецептах в Подписки
+     и Списке покупок. """
     class Meta:
         model = Recipe
         fields = ['id',
@@ -227,3 +227,29 @@ class RecipeShortSerializer(MyCustomUserCreateSerializer):
                   'image',
                   'cooking_time'
                   ]
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    """Сериализатор для работы со списком покупок."""
+    class Meta:
+        model = ShoppingCart
+        fields = ['recipe', 'user']
+        # validators = [UniqueTogetherValidator(queryset=ShoppingCart.objects.all(),
+        #                                       fields=('author', 'recipe'),
+        #                                       message='Рецепт уже в списоке покупок')]
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        return RecipeShortSerializer(
+            instance.recipe,
+            context={'request': request}
+        ).data
+
+
+# class PasswordSerializer(serializers.Serializer):
+#     new_password = serializers.CharField(required=True)
+#     current_password = serializers.CharField(required=True)
+
+#     class Meta:
+#         model = User
+#         fields = "__all__"

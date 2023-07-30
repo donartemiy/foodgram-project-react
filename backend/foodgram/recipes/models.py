@@ -93,6 +93,7 @@ class Favorite(models.Model):
             models.UniqueConstraint(fields=['recipe', 'user'],
                                     name='unique_like')
         ]
+        default_related_name = 'shopping_cart'
 
     def __str__(self):
         return f'ИЗБРАННОЕ{self.user}, id рецепта: {self.recipe.id}, {self.recipe}'
