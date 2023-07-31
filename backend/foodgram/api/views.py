@@ -84,7 +84,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                                 status=status.HTTP_400_BAD_REQUEST)
             obj_favorite = Favorite.objects.get(user=user, recipe=recipe)
             obj_favorite.delete()
-            return Response(None)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
     # @action(
     #     detail=True,
