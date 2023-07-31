@@ -95,6 +95,7 @@ class ShoppingCart(models.Model):
         ordering = ['-id']
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
+        default_related_name = 'shopping_cart'
 
     def __str__(self):
         return f'{self.user.username} добавил {self.recipe.name} в список покупок'
@@ -109,7 +110,7 @@ class Favorite(models.Model):
             models.UniqueConstraint(fields=['recipe', 'user'],
                                     name='unique_like')
         ]
-        default_related_name = 'shopping_cart'
+        
 
     def __str__(self):
         # return f'ИЗБРАННОЕ{self.user}, id рецепта: {self.recipe.id}, {self.recipe}'
