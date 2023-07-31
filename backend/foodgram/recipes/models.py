@@ -138,4 +138,5 @@ class Subscription(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.follower.username} подписан на {self.following.username}'
+        return (f'{self.follower.username} подписан'
+                f'на {self.following.username}')

@@ -1,6 +1,8 @@
 from django.contrib import admin
-from import_export.admin import ImportExportModelAdmin
-from recipes.models import Favorite, ShoppingCart, Ingredient, Recipe, Tag, RecipeIngredient, Subscription
+
+from recipes.models import (Favorite, Ingredient, Recipe,
+                            RecipeIngredient,
+                            ShoppingCart, Subscription, Tag)
 from users.models import User
 
 
@@ -21,7 +23,6 @@ class RecipeAdmin(admin.ModelAdmin):
 
 admin.site.register(ShoppingCart)
 admin.site.register(Favorite)
-# admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Tag)
 admin.site.register(Subscription)
 
@@ -31,7 +32,6 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ('pk', 'email', 'username', 'first_name', 'last_name')
     search_fields = ('username', 'email', 'first_name', 'last_name')
     list_filter = ('username', 'email')
-    # empty_value_display = settings.EMPTY_VALUE
 
 
 @admin.register(Ingredient)
