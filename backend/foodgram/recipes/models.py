@@ -70,9 +70,6 @@ class RecipeIngredient(models.Model):
         verbose_name = 'Ингредиент в рецепте'
         verbose_name_plural = 'Ингредиенты в рецепте'
 
-    def __str__(self):
-        return self.recipe
-
 
 class Tag(models.Model):
     name = models.CharField(max_length=MAX_LENGTH,
