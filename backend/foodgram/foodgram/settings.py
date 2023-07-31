@@ -2,6 +2,10 @@ from pathlib import Path
 from datetime import timedelta
 import os
 
+# Constants
+MAX_LENGTH = 200
+MAX_LENGTH_HEX = 7
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -10,7 +14,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-u542b6=i4m=(&vhm1^@*_a^5^=rnwlc2vj6*oi@0!4uflvxpq#'
+SECRET_KEY = 'django-insecure-u542b6=i4m=\
+    (&vhm1^@*_a^5^=rnwlc2vj6*oi@0!4uflvxpq#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -85,16 +90,20 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': ('django.contrib.auth.password_validation'
+                 '.UserAttributeSimilarityValidator'),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME': ('django.contrib.auth.password_validation'
+                 '.MinimumLengthValidator'),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME': ('django.contrib.auth.password_validation'
+                 '.CommonPasswordValidator'),
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': ('django.contrib.auth.password_validation'
+                 '.NumericPasswordValidator'),
     },
 ]
 
@@ -126,31 +135,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+
+# Что бы прошли миграции
+AUTH_USER_MODEL = 'users.User'
+
+
 # Configuration djoser
+
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.IsAuthenticated',
         'rest_framework.permissions.AllowAny',
     ],
-
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-        # 'rest_framework.authentication.SessionAuthentication',
-        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
-    # 'DEFAULT_PAGINATION_CLASS': 'api.pagination.PageLimitPagination',
-    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': ('rest_framework.pagination'
+                                 '.PageNumberPagination'),
     'PAGE_SIZE': 6,
-    # 'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
 
 SIMPLE_JWT = {
-    # Cрок жизни токена
+    # Time to live token
     'ACCESS_TOKEN_LIFETIME': timedelta(days=10),
     'AUTH_HEADER_TYPES': ('Token',),
-    # 'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 DJOSER = {
@@ -166,9 +174,3 @@ DJOSER = {
         'user_create': 'api.serializers.MyCustomUserCreateSerializer',
     }
 }
-
-
-# Что бы прошли миграции
-AUTH_USER_MODEL = 'users.User'
-
-# CSRF_COOKIE_SECURE = False

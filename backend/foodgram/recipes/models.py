@@ -1,5 +1,6 @@
 from django.db import models
 
+from foodgram.settings import MAX_LENGTH, MAX_LENGTH_HEX
 from users.models import User
 
 
@@ -7,11 +8,11 @@ class Recipe(models.Model):
     tags = models.ManyToManyField(
         'Tag',
         verbose_name='Список id тегов')
-    author = models.ForeignKey(  # У разных постов один автор
+    author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='rname_recipe_author')
-    ingredients = models.ManyToManyField(  # У разных рецпетов неск. ингр-ов
+    ingredients = models.ManyToManyField(
         'Ingredient',
         through='RecipeIngredient',
         through_fields=('recipe', 'ingredient'),
@@ -33,10 +34,10 @@ class Recipe(models.Model):
         null=True,
         verbose_name='Картинка, закодированная в Base64')
     name = models.CharField(
-        max_length=200,
+        max_length=MAX_LENGTH,
         verbose_name='Название')
     text = models.TextField(verbose_name='Описание')
-    cooking_time = models.PositiveIntegerField(     # >= 1
+    cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления в минутах')
     pub_date = models.DateTimeField(auto_now_add=True)
 
@@ -48,8 +49,8 @@ class Recipe(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=200)  # primary_key=True
-    measurement_unit = models.CharField(max_length=200)
+    name = models.CharField(max_length=MAX_LENGTH)
+    measurement_unit = models.CharField(max_length=MAX_LENGTH)
 
     class Meta:
         default_related_name = 'ingredient'
@@ -74,11 +75,14 @@ class RecipeIngredient(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=200, verbose_name='Название')
-    color = models.CharField(max_length=7, verbose_name='Цвет в HEX')
-    slug = models.SlugField(max_length=200, verbose_name='Уникальный слаг',
+    name = models.CharField(max_length=MAX_LENGTH,
+                            verbose_name='Название')
+    color = models.CharField(max_length=MAX_LENGTH_HEX,
+                             verbose_name='Цвет в HEX')
+    slug = models.SlugField(max_length=MAX_LENGTH,
+                            verbose_name='Уникальный слаг',
                             unique=True)
-    
+
     class Meta:
         verbose_name = 'Тэг'
         verbose_name_plural = 'Тэги'
@@ -98,7 +102,8 @@ class ShoppingCart(models.Model):
         default_related_name = 'shopping_cart'
 
     def __str__(self):
-        return f'{self.user.username} добавил {self.recipe.name} в список покупок'
+        return (f'{self.user.username} добавил '
+                f'{self.recipe.name} в список покупок')
 
 
 class Favorite(models.Model):
@@ -108,12 +113,9 @@ class Favorite(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['recipe', 'user'],
-                                    name='unique_like')
-        ]
-        
+                                    name='unique_like')]
 
     def __str__(self):
-        # return f'ИЗБРАННОЕ{self.user}, id рецепта: {self.recipe.id}, {self.recipe}'
         return f'{self.user.username} добавил {self.recipe.name} в избраннное'
 
 
@@ -136,5 +138,4 @@ class Subscription(models.Model):
         ]
 
     def __str__(self):
-        # return f'ПОДПИСКИ {self.follower} подписан на {self.following}'
-        return f'{self.user.username} подписан на {self.author.username}'
+        return f'{self.follower.username} подписан на {self.following.username}'

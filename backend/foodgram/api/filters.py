@@ -1,19 +1,16 @@
 import django_filters as filters
-# from django_filters.rest_framework import DjangoFilterBackend
 
-from recipes.models import Ingredient, Recipe, Tag, Favorite
+from recipes.models import Ingredient, Recipe, Tag
 
 
 class RecipeFilter(filters.FilterSet):
     tags = filters.ModelMultipleChoiceFilter(
         field_name="tags__slug",
         to_field_name="slug",
-        queryset=Tag.objects.all(),
-    )
+        queryset=Tag.objects.all(),)
     is_favorited = filters.CharFilter(method="get_is_favorited")
     is_in_shopping_cart = filters.CharFilter(
-        method='get_is_in_shopping_cart'
-    )
+        method='get_is_in_shopping_cart')
 
     class Meta:
         model = Recipe
@@ -21,8 +18,6 @@ class RecipeFilter(filters.FilterSet):
 
     def get_is_favorited(self, queryset, name, value):
         user = self.request.user
-        print('aaaaaaaaaaaaaaaa')
-        # print(Recipe.objects.filter(favorite__recipe_id))
         if value:
             return Recipe.objects.filter(favorite__user=user)
         return Recipe.objects.all()
