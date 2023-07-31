@@ -8,11 +8,7 @@ from users.models import User
 
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
-    # extra = 1
-
-
-class RecipeIngredientAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'recipe', 'ingredient', 'amount')
+    extra = 1
 
 
 @admin.register(Recipe)
