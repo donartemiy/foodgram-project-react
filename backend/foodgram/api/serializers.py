@@ -1,17 +1,40 @@
+from rest_framework.validators import UniqueTogetherValidator
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Subscription, Tag)
 from rest_framework import serializers
 from djoser.serializers import UserSerializer, UserCreateSerializer
 from users.models import User
+from drf_extra_fields.fields import Base64ImageField
 
 
+class MyCustomUserCreateSerializer(UserCreateSerializer):
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'password')
+        
 
 class FavoriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для работы с избранными рецептами.???"""
     user = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Favorite
         fields = ('user', 'recipe')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=('user', 'recipe'),
+                message='Рецепт уже добавлен в избранное'
+            )
+        ]
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        return RecipeShortSerializer(
+            instance.recipe,
+            context={'request': request}
+        ).data
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -43,17 +66,33 @@ class RecipeForFavoriteSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     """Для просмотра рецепта"""
     tags = TagSerializer(many=True)
+    image = Base64ImageField()
+    author = MyCustomUserCreateSerializer(read_only=True)
     ingredients = RecipeIngredientSerializer(many=True,
                                              # Использовать связную модель
                                              source='rname_recipe_ingredients')
     is_favorited = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'author',
-                  'ingredients', 'name', 'image',
-                  'text', 'cooking_time',
-                  'is_favorited', 'is_in_shopping_cart')
+                  'ingredients', 'is_favorited',
+                  'is_in_shopping_cart', 'name',
+                  'image', 'text', 'cooking_time',
+                  )
+        
+    def get_is_favorited(self, obj):
+        request = self.context.get('request')
+        return (request and request.user.is_authenticated
+                and Favorite.objects.filter(
+                    author=request.user, recipe=obj
+                ).exists())
+    
+    def get_is_in_shopping_cart(self, obj):
+        request = self.context.get('request')
+        return (request and request.user.is_authenticated
+                and ShoppingCart.objects.filter(user=request.user, recipe=obj).exists())
 
     def to_representation(self, instance):
         """Преобразуем данные перед выводом."""
@@ -80,10 +119,17 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
 class RecipeCreateSerializer(serializers.ModelSerializer):
     """Для создания рецепта. """
     ingredients = RecipeIngredientCreateSerializer(many=True)
+    image = Base64ImageField()
+    # author = MyCustomUserCreateSerializer(read_only=True)
+    ingredients = RecipeIngredientCreateSerializer(many=True)
+    cooking_time = serializers.IntegerField()
+    tags = serializers.SlugRelatedField(
+        many=True, queryset=Tag.objects.all(), slug_field="id"
+    )
 
     class Meta:
         model = Recipe
-        fields = ('name', 'cooking_time', 'text', 'tags', 'ingredients')
+        fields = ('name', 'cooking_time', 'text', 'tags', 'ingredients', 'image')
         # fields = ('name', 'cooking_time', 'text', 'tags')
 
     def create(self, validated_data):
@@ -173,13 +219,6 @@ class UserSerializer(serializers.ModelSerializer):
         # fields = '__all__'
         fields = ('email', 'id', 'username', 'first_name',
                   'last_name')
-
-
-class MyCustomUserCreateSerializer(UserCreateSerializer):
-    class Meta:
-        model = User
-        fields = ('email', 'id', 'username', 'first_name',
-                  'last_name', 'password')
 
 
 class MyCustomUserSerializer(UserSerializer):

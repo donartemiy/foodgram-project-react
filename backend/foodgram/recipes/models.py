@@ -44,7 +44,7 @@ class Recipe(models.Model):
         ordering = ['-pub_date']
 
     def __str__(self):
-        return f'РЕЦЕПТ {self.name}'
+        return self.name
 
 
 class Ingredient(models.Model):
@@ -55,7 +55,7 @@ class Ingredient(models.Model):
         default_related_name = 'ingredient'
 
     def __str__(self):
-        return f'ИНГРЕДИЕНТ {self.name}'
+        return self.name
 
 
 class RecipeIngredient(models.Model):
@@ -65,8 +65,12 @@ class RecipeIngredient(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField()
 
+    class Meta:
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецепте'
+
     def __str__(self):
-        return f'РЕЦЕПТИНГРЕДИЕНТ {self.recipe}'
+        return self.recipe
 
 
 class Tag(models.Model):
@@ -74,14 +78,26 @@ class Tag(models.Model):
     color = models.CharField(max_length=7, verbose_name='Цвет в HEX')
     slug = models.SlugField(max_length=200, verbose_name='Уникальный слаг',
                             unique=True)
+    
+    class Meta:
+        verbose_name = 'Тэг'
+        verbose_name_plural = 'Тэги'
 
     def __str__(self):
-        return f'ТЭГ {self.name}'
+        return self.name
 
 
 class ShoppingCart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'Список покупок'
+        verbose_name_plural = 'Списки покупок'
+
+    def __str__(self):
+        return f'{self.user.username} добавил {self.recipe.name} в список покупок'
 
 
 class Favorite(models.Model):
@@ -96,7 +112,8 @@ class Favorite(models.Model):
         default_related_name = 'shopping_cart'
 
     def __str__(self):
-        return f'ИЗБРАННОЕ{self.user}, id рецепта: {self.recipe.id}, {self.recipe}'
+        # return f'ИЗБРАННОЕ{self.user}, id рецепта: {self.recipe.id}, {self.recipe}'
+        return f'{self.user.username} добавил {self.recipe.name} в избраннное'
 
 
 class Subscription(models.Model):
@@ -118,4 +135,5 @@ class Subscription(models.Model):
         ]
 
     def __str__(self):
-        return f'ПОДПИСКИ {self.follower} подписан на {self.following}'
+        # return f'ПОДПИСКИ {self.follower} подписан на {self.following}'
+        return f'{self.user.username} подписан на {self.author.username}'
