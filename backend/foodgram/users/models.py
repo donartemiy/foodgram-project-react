@@ -46,8 +46,7 @@ class Subscription(models.Model):
                 name='unique subs'),
             models.CheckConstraint(
                 name="non selfsubcribtion",
-                check=~models.Q(following=models.F("follower")))
-                ]
+                check=~models.Q(following=models.F("follower")))]
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
 
