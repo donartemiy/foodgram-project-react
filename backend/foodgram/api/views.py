@@ -24,8 +24,9 @@ from api.serializers import (FavoriteSerializer,
                              UserSerializer, UserSubscribeSerializer)
 from foodgram.settings import MEDIA_ROOT
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Subscription, Tag)
-from users.models import User
+                            ShoppingCart, Tag)
+from users.models import User, Subscription
+from api.utils import geterate_buying_list
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -110,28 +111,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         author = request.user
         shopping_cart = author.shopping_cart.all()
-        buying_list = {}
-        for record in shopping_cart:
-            recipe = record.recipe
-            ingredients = RecipeIngredient.objects.filter(recipe=recipe)
-            for ingredient in ingredients:
-                amount = ingredient.amount
-                name = ingredient.ingredient.name
-                measurement_unit = ingredient.ingredient.measurement_unit
-                if name not in buying_list:
-                    buying_list[name] = {
-                        "measurement_unit": measurement_unit,
-                        "amount": amount, }
-                else:
-                    buying_list[name]["amount"] = (
-                        buying_list[name]["amount"] + amount)
-        wishlist = []
-        for name, data in buying_list.items():
-            wishlist.append(
-                f"\n{name} ({data['measurement_unit']}) - {data['amount']}")
-        content = "".join(wishlist)
+        content = geterate_buying_list(RecipeIngredient, shopping_cart)
 
-        # Создание файла shopping_cart.txt в папке media
         filename = 'shopping_cart.txt'
         filepath = os.path.join(MEDIA_ROOT, filename)
         with open(filepath, 'w') as file:
@@ -188,15 +169,13 @@ class MyUserViewSet(UserViewSet):
     serializer_class = UserSerializer
 
     def list(self, request, *args, **kwargs):
-        """Возвращает всех пользователей
-        http://127.0.0.1:8000/api/users/"""
+        """Возвращает всех пользователей /users/. """
         queryset = User.objects.all()
         serializer = UserSerializer(queryset, many=True)
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):
-        """ Возвращает информацию о конкретном пользователе
-        http://127.0.0.1:8000/api/users/1/. """
+        """ Возвращает информацию о конкретном пользователе /users/1/. """
         queryset = User.objects.all()
         user = get_object_or_404(queryset, pk=pk)
         serializer = UserSerializer(user)

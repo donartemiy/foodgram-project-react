@@ -4,8 +4,8 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Subscription, Tag)
-from users.models import User
+                            ShoppingCart, Tag)
+from users.models import User, Subscription
 
 
 class MyCustomUserCreateSerializer(UserCreateSerializer):
@@ -53,6 +53,12 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = 'id', 'name', 'amount', 'measurement_unit'
 
+    def validate_amount(self, instance):
+        """Количество ингредиента больше 0."""
+        if instance <= 0:
+            raise serializers.ValidationError("Введите число больше 0")
+        return instance
+
 
 class RecipeForFavoriteSerializer(serializers.ModelSerializer):
     """Сериалайзер для отображения добавления/удаления favorite. """
@@ -62,12 +68,12 @@ class RecipeForFavoriteSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    """Для просмотра рецепта"""
+    """Для просмотра рецепта. Через source='rname_recipe_ingredients'
+    используем связную модель. """
     tags = TagSerializer(many=True)
     image = Base64ImageField()
     author = MyCustomUserCreateSerializer(read_only=True)
     ingredients = RecipeIngredientSerializer(many=True,
-                                             # Использовать связную модель
                                              source='rname_recipe_ingredients')
     is_favorited = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -94,9 +100,9 @@ class RecipeSerializer(serializers.ModelSerializer):
                                                 recipe=obj).exists())
 
     def to_representation(self, instance):
-        """Преобразуем данные перед выводом."""
+        """Преобразуем данные перед выводом. Определяем is_favorited,
+        в зависимости от наличия связных списков. """
         representation = super().to_representation(instance)
-        # Преобразуем is_favorited в True, если есть связанные записи
         if instance.is_favorited.exists():
             representation['is_favorited'] = True
         else:
@@ -130,11 +136,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'ingredients', 'image')
 
     def create(self, validated_data):
-        """ Станадртный create не может сам создать объекты записываемые
-        вложенные поля. Поле ingredients. """
+        """ Станадртный create не может сам создать объекты
+        записываемые вложенные поля. Поле ingredients. """
         ingredients = validated_data.pop('ingredients')
         instance = super().create(validated_data)
-
         # Обновление данных ингредиентов
         for ingredient_data in ingredients:
             RecipeIngredient(recipe=instance,
@@ -143,44 +148,42 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        # Обновление данных основного объекта Recipe
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get('cooking_time',
-                                                   instance.cooking_time)
-        instance.save()
-
-        # Обновление данных тегов
+        """ Обновление рецепта. Получаем значения
+        вложенных полей тэгов и ингредиентов. """
         tags_data = validated_data.pop('tags', [])
         instance.tags.set(tags_data)
-
-        # Обновление данных ингредиентов
         ingredients = validated_data.pop('ingredients', [])
         instance.ingredients.clear()
         for ingredient_data in ingredients:
             RecipeIngredient.objects.create(recipe=instance, **ingredient_data)
+        instance = super().update(instance, validated_data)
+        return instance
+
+    def validate_cooking_time(self, instance):
+        """Время приготовления больше 0."""
+        if instance <= 0:
+            raise serializers.ValidationError("Введите число больше 0")
         return instance
 
     def to_representation(self, instance):
-        """ Для отображения данных после создания рецепта. """
+        """ Отображение данных после создания рецепта. """
         return RecipeSerializer(instance).data
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = '__all__'
+        fields = ('id', 'name', 'measurement_unit')
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
-        fields = '__all__'
+        fields = ('following', 'follower')
 
 
 class SubscriptionListSerializer(serializers.ModelSerializer):
-    """Мои подписки.
-    http://localhost/api/users/subscriptions/"""
+    """ Мои подписки users/subscriptions. """
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField("get_recipes_count")
@@ -230,8 +233,7 @@ class UserSubscribeSerializer(serializers.ModelSerializer):
                                                  ).exists()
         if request.user == data['following'] or check_uniq:
             raise serializers.ValidationError(
-                'Вы уже подписаны на этого автора \
-                 или пытаетесь подписаться на самого себя'
+                'Такая подписка невозможна'
             )
         return data
 
