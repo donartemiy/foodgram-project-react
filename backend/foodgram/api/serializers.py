@@ -223,7 +223,7 @@ class UserSubscribeSerializer(serializers.ModelSerializer):
     """Сериализатор для подписки/отписки от пользователей."""
     class Meta:
         model = Subscription
-        fields = '__all__'
+        fields = ('following', 'follower')
 
     def validate(self, data):
         """Пользователь не может подписаться на самого себя."""

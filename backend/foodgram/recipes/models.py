@@ -55,9 +55,9 @@ class Recipe(models.Model):
                                     verbose_name='Дата публикации')
 
     class Meta:
-        ordering = ('-pub_date',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.name
@@ -70,14 +70,14 @@ class Ingredient(models.Model):
                                         verbose_name='Единицы измерения')
 
     class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
         constraints = [
             models.UniqueConstraint(
                 fields=['name', 'measurement_unit'],
                 name='unique_name_measurement_unit_ingredient'
             )
         ]
-        verbose_name = 'Ингредиент'
-        verbose_name_plural = 'Ингредиенты'
         default_related_name = 'ingredient'
 
     def __str__(self):
@@ -109,8 +109,6 @@ class RecipeIngredient(models.Model):
 class Tag(models.Model):
     name = models.CharField(max_length=MAX_LENGTH,
                             verbose_name='Название')
-    # color = models.CharField(max_length=MAX_LENGTH_HEX,
-    #                          verbose_name='Цвет в HEX')
     color = ColorField(default='#FF0000',
                        verbose_name='Цвет в HEX')
     slug = models.SlugField(max_length=MAX_LENGTH,
@@ -118,14 +116,14 @@ class Tag(models.Model):
                             unique=True)
 
     class Meta:
+        verbose_name = 'Тэг'
+        verbose_name_plural = 'Тэги'
         constraints = [
             models.UniqueConstraint(
                 fields=['name', 'color', 'slug'],
                 name='unique_tag_name_color_slug'
             )
         ]
-        verbose_name = 'Тэг'
-        verbose_name_plural = 'Тэги'
 
     def __str__(self):
         return self.name
@@ -138,9 +136,9 @@ class ShoppingCart(models.Model):
                                verbose_name='Название рецепта')
 
     class Meta:
-        ordering = ('recipe',)
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
+        ordering = ('recipe',)
         default_related_name = 'shopping_cart'
 
     def __str__(self):
@@ -155,11 +153,11 @@ class Favorite(models.Model):
                                verbose_name='Название рецепта')
 
     class Meta:
+        verbose_name = 'Список избранного'
+        verbose_name_plural = 'Списки избранного'
         constraints = [
             models.UniqueConstraint(fields=['recipe', 'user'],
                                     name='unique_like')]
-        verbose_name = 'Список избранного'
-        verbose_name_plural = 'Списки избранного'
 
     def __str__(self):
         return f'{self.user.username} добавил {self.recipe.name} в избраннное'

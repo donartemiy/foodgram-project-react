@@ -17,9 +17,9 @@ class User(AbstractUser):
                                 null=False, verbose_name='password')
 
     class Meta:
-        ordering = ['username']
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+        ordering = ('username',)
         default_related_name = 'user'
 
     def __str__(self):
@@ -39,7 +39,9 @@ class Subscription(models.Model):
         related_name='follower')
 
     class Meta:
-        ordering = ['following']
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        ordering = ('following',)
         constraints = [
             models.UniqueConstraint(
                 fields=['following', 'follower'],
@@ -47,8 +49,6 @@ class Subscription(models.Model):
             models.CheckConstraint(
                 name="non selfsubcribtion",
                 check=~models.Q(following=models.F("follower")))]
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
 
     def __str__(self):
         return (f'{self.follower.username} подписан'
