@@ -1,32 +1,50 @@
-# praktikum_new_diplom
-Создать в https://dillinger.io/
+# Foodgram
+Foodgram - готовый к деплою сайт по добавлению рецептов.
 
+## Стек
+ - python 3.11
+ - django 3.2
+ - djangorestframework 3.12.4
+ - react
+ - nginx 1.19.3
 
------------
-Приложения:
-- рецепты
-- API
-- создайте приложение users
+## Установка
+Настройка окружения
+```bash
+git clone https://github.com/donartemiy/foodgram-project-react.git
 
+# Backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 
-Модели:
- - ???
- - User
- - Grocery_list
- - Recipe
- - Ingredient
- - Tag
- - Favorite
+# Заполнить переменные окружения по аналогии с файлом .env_example, переименовать файл
+vi .env_exmaple
+mv .env_exmaple .env
 
-URL:
- - ''
- - recipe/1
- - ingredient/1
- - subscribe
- - favorite
- - author/1
- - create_recipe
+cd backend/foodgram
+python manage.py migrate
+python manage.py createsuperuser
+```
 
- - registration
- - change-pass
- - autorisation
+## Запуск проекта
+```bash
+# Frontend&nginx
+cd infra
+docker compose up --build
+
+# Запуск backend
+cd backend/foodgram
+python manage.py runserver
+```
+
+# Доступные страницы
+- Документация доступна по адресу:
+http://127.0.0.1/api/docs/
+- Сайт доступен по адресу:
+http://127.0.0.1/
+- Админка сайта:
+http://127.0.0.1/admin/
+
+# Автор
+- donartemiy
