@@ -1,0 +1,46 @@
+version: '3'
+
+# Перечень volume
+volumes:
+  pg_data:
+  # Новый volume — для статических файлов
+  static:
+  media:
+
+# Перечень контейнеров
+services:
+  db:
+    # Из какого образа запустить контейнер:
+    image: postgres:13
+    env_file: .env
+    # Какой volume подключить для этого контейнера
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+  backend:
+    build: ./backend/foodgram/
+    env_file: .env
+    volumes:
+      - static:/backend_static
+      - media:/app/media
+    # depends_on:
+    #   - db
+  frontend:
+    env_file: .env
+    build: ./frontend/
+    command: cp -r /app/build/. /frontend_static/
+    volumes:
+      - static:/frontend_static
+  gateway:
+    # Сбилдить и запустить образ, 
+    # описанный в Dockerfile в папке gateway
+    build: ./gateway/
+    # А тут подключаем volume со статикой к gateway
+    volumes:
+      - static:/staticfiles/
+      - media:/media
+    ports:
+      - 9000:80
+    # Ключ ports устанавливает
+    # перенаправление всех запросов с порта 8000 хоста
+    # на порт 80 контейнера.
+

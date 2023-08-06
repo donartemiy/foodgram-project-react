@@ -1,0 +1,33 @@
+version: '3'
+
+volumes:
+  pg_data:
+  static:
+  media:
+
+services:
+  db:
+    image: postgres:13
+    env_file: .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+  backend:
+    image: mkibe/foodgram_backend
+    env_file: .env
+    volumes:
+      - static:/backend_static
+      - media:/app/media
+  frontend:
+    env_file: .env
+    image: mkibe/foodgram_frontend
+    command: cp -r /app/build/. /frontend_static/
+    volumes:
+      - static:/frontend_static
+  gateway:
+    image: mkibe/foodgram_gateway
+    volumes:
+      - static:/staticfiles/
+      - media:/media
+    ports:
+      - 8080:80
+

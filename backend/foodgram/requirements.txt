@@ -11,8 +11,12 @@ typing_extensions==4.7.1
 djoser==2.1.0
 django-filter~=22.1
 drf-extra-fields==3.6.1
-django-import-export==0.3.1
+# django-import-export==0.3.1
+# django-import-export==3.3.0
+django-import-export==3.0.1
 djangorestframework==3.14.0
 djangorestframework-simplejwt==4.8.0
 django-colorfield==0.9.0
 python-dotenv==1.0.0
+psycopg2-binary==2.9.3
+gunicorn==20.1.0
