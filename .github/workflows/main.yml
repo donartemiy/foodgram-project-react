@@ -70,7 +70,7 @@ jobs:
           push: true
           # В параметре tags задаётся название и тег для образа.
           # Для каждого пересобранного образа 
-          # устанавливаем тег latest, чтобы потом
+          # устанавливаем тег latest, чтобы потом 
           # на сервере и в docker-compose.yml не указывать версию
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:latest
 
