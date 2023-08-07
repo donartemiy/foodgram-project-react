@@ -8,8 +8,8 @@ Foodgram - готовый к деплою сайт по добавлению р�
  - react
  - nginx 1.19.3
 
-## Установка
-Настройка окружения
+## Локальная установка без БД
+### Настройка окружения
 ```bash
 git clone https://github.com/donartemiy/foodgram-project-react.git
 
@@ -27,7 +27,7 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-## Запуск проекта
+### Запуск проекта
 ```bash
 # Frontend&nginx
 cd infra
@@ -38,6 +38,41 @@ cd backend/foodgram
 python manage.py runserver
 ```
 
+## Delpoy на сервер
+### Проект состоит из четырех контейнеров
+1. backend
+- python 3.9
+- django 3.2.3
+- gunicorn 20.1.0
+2. frontend
+- react
+3. gateway
+- nginx 1.22.1
+4. db
+- postgres 13
+
+## Как развернуть проект Foodgram
+1. Требуется docker v3
+2. Из корня репозитория скачать: 2.1. Файл "docker-compose.production.yml" 2.2. Файл ".env.example"
+3. Переименовать .env.example в .env
+4. Рекомендуется указать собственные значения для переменных
+5. Собрать контейнеры и запуститть
+
+```
+sudo docker compose -f docker-compose.production.yml up -d
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
+sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+```
+6. Доступ к сайту предоставляется через порт 8080.
+
+## Загрузка готовых данных в БД
+```
+sudo docker compose -f docker-compose.production.yml ps
+sudo docker exec -it foodgram-backend-1 bash
+python manage.py loaddata data/ingredient.json
+```
+
 # Доступные страницы
 - Документация доступна по адресу:
 http://127.0.0.1/api/docs/
@@ -45,6 +80,15 @@ http://127.0.0.1/api/docs/
 http://127.0.0.1/
 - Админка сайта:
 http://127.0.0.1/admin/
+
+## Данные для ревьюера
+"username": "Alex",
+"password": "Al12345678",
+"email": "alex@mail.ru"
+
+https://premiumsite.ddns.net/
+https://premiumsite.ddns.net/admin/
+158.160.7.157
 
 # Автор
 - donartemiy

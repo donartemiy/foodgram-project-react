@@ -49,10 +49,3 @@ class IngredientAdmin(ImportExportModelAdmin):
     list_display = ('pk', 'name', 'measurement_unit',)
     search_fields = ('name', )
     resource_class = [IngredientResource]
-
-
-# class IngredientAdmin(ImportExportModelAdmin):
-#     resource_classes = [Ingredient] 
-
-
-# admin.site.register(Ingredient, IngredientAdmin)
