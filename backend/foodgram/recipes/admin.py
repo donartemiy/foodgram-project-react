@@ -38,21 +38,21 @@ class TagAdmin(admin.ModelAdmin):
     list_display = ('pk', 'name', 'color', 'slug',)
 
 
-# class IngredientResource(resources.ModelResource):
-#     """ Необходим для импорта ингредиентов. """
-#     class Meta:
-#         model = Ingredient
+class IngredientResource(resources.ModelResource):
+    """ Необходим для импорта ингредиентов. """
+    class Meta:
+        model = Ingredient
 
 
-# @admin.register(Ingredient)
-# class IngredientAdmin(ImportExportModelAdmin):
-#     list_display = ('pk', 'name', 'measurement_unit',)
-#     search_fields = ('name', )
-#     resource_class = [IngredientResource]
-
-
+@admin.register(Ingredient)
 class IngredientAdmin(ImportExportModelAdmin):
-    resource_classes = [Ingredient]
+    list_display = ('pk', 'name', 'measurement_unit',)
+    search_fields = ('name', )
+    resource_class = [IngredientResource]
 
 
-admin.site.register(Ingredient, IngredientAdmin)
+# class IngredientAdmin(ImportExportModelAdmin):
+#     resource_classes = [Ingredient]
+
+
+# admin.site.register(Ingredient, IngredientAdmin)
