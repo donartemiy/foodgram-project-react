@@ -52,7 +52,7 @@ class IngredientAdmin(ImportExportModelAdmin):
 
 
 # class IngredientAdmin(ImportExportModelAdmin):
-#     resource_classes = [Ingredient]
+#     resource_classes = [Ingredient] 
 
 
 # admin.site.register(Ingredient, IngredientAdmin)
