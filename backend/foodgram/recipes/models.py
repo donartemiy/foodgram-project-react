@@ -37,6 +37,7 @@ class Recipe(models.Model):
         verbose_name='В списке покупок',
         related_name='rname_recipes_is_in_shopping_cart')
     image = models.ImageField(
+        # upload_to='images/',
         blank=True,
         null=True,
         verbose_name='Картинка, закодированная в Base64')
