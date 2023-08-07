@@ -1,0 +1,23 @@
+[
+    {
+      "model": "recipes.ingredient",
+      "fields": {
+        "name": "абрикосовое варенье",
+        "measurement_unit": "г"
+      }
+    },
+    {
+      "model": "recipes.ingredient",
+      "fields": {
+        "name": "абрикосовое пюре",
+        "measurement_unit": "г"
+      }
+    },
+    {
+      "model": "recipes.ingredient",
+      "fields": {
+        "name": "абрикосовый джем",
+        "measurement_unit": "г"
+      }
+    }
+  ]
