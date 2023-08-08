@@ -1,6 +1,7 @@
 from colorfield.fields import ColorField
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
+from django.core.validators import (MinValueValidator, MaxValueValidator,
+                                    RegexValidator)
 
 from foodgram.settings import MAX_LENGTH
 from users.models import User
@@ -46,7 +47,7 @@ class Recipe(models.Model):
         verbose_name='Название',
         validators=[
             RegexValidator(
-                regex=^[а-яА-ЯёЁa-zA-Z]+$',
+                regex='^[а-яА-ЯёЁa-zA-Z]+$',
                 message='Название рецепта должно быть в текстовом виде'
             )
         ])
