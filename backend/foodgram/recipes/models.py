@@ -1,6 +1,6 @@
 from colorfield.fields import ColorField
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 
 from foodgram.settings import MAX_LENGTH
 from users.models import User
@@ -43,7 +43,13 @@ class Recipe(models.Model):
         verbose_name='Картинка, закодированная в Base64')
     name = models.CharField(
         max_length=MAX_LENGTH,
-        verbose_name='Название')
+        verbose_name='Название',
+        validators=[
+            RegexValidator(
+                regex=^[а-яА-ЯёЁa-zA-Z]+$',
+                message='Название рецепта должно быть в текстовом виде'
+            )
+        ])
     text = models.TextField(verbose_name='Описание')
     cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления в минутах',
