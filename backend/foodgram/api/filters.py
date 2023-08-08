@@ -28,11 +28,6 @@ class RecipeFilter(FilterSet):
 #         if value:
 #             return Recipe.objects.filter(shopping_cart__user=user)
 #         return Recipe.objects.all()
-
-
-# class IngredientFilter(FilterSet):
-#     name = filters.CharFilter(field_name="name", lookup_expr="startswith")
-
     is_favorited = filters.BooleanFilter(
         method='is_favorited_filter')
     is_in_shopping_cart = filters.BooleanFilter(
@@ -53,6 +48,10 @@ class RecipeFilter(FilterSet):
         if value and user.is_authenticated:
             return queryset.filter(shopping_recipe__user=user)
         return queryset
+
+
+class IngredientFilter(FilterSet):
+    name = filters.CharFilter(field_name="name", lookup_expr="startswith")
 
     class Meta:
         model = Ingredient
